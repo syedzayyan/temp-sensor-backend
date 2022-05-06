@@ -8,8 +8,16 @@ import sqlalchemy.orm as _orm
 import services as _services
 import schemas as _schemas
 
+import os as _os
+import dotenv as _dotenv
+
 app = _fastapi.FastAPI()
 security = HTTPBasic()
+
+
+_dotenv.load_dotenv()
+
+FRONT_URL = _os.environ['FRONTEND_URL']
 
 origins = [
     "http://localhost.tiangolo.com",
@@ -17,6 +25,7 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:5000",
+    FRONT_URL
 ]
 
 app.add_middleware(
