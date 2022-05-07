@@ -3,7 +3,7 @@ import fastapi as _fastapi
 import fastapi.security as _security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic
-
+from fastapi_utils.tasks import repeat_every
 import sqlalchemy.orm as _orm
 import services as _services
 import schemas as _schemas
@@ -163,4 +163,7 @@ def delete_temps_by_freezer_id(
 ):
     return _services.delete_temp(db=db, id=id)
 
-
+@app.on_event("startup")
+@repeat_every(seconds=3600)  # 1 hour
+async def remove_expired_tokens_task():
+    return await _services.email_alarm_user()

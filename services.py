@@ -1,4 +1,5 @@
 import os as _os
+from time import sleep
 import dotenv as _dotenv
 import jwt as _jwt
 import sqlalchemy.orm as _orm
@@ -10,12 +11,16 @@ import datetime as _dt
 import database as _database
 import schemas as _schemas
 import models as _models
+from concurrent.futures import ThreadPoolExecutor
+
+import email_send
 
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 _dotenv.load_dotenv()
 
 _JWT_SECRET = _os.environ['JWT_SECRET']
+MINUTES = int(_os.environ['MINUTES'])
 
 oauth2schema = _security.OAuth2PasswordBearer("/api/token")
 
@@ -182,3 +187,34 @@ def delete_temp(db: _orm.Session, id: int):
     db.query(_models.Temperature).filter(_models.Temperature.freeze_id == id).delete(synchronize_session=False)
     db.commit()
     return
+
+_threadpool_cpus = int(_os.cpu_count() / 2)
+EXECUTOR = ThreadPoolExecutor(max_workers=max(_threadpool_cpus, 2))
+
+
+def minutes_ago():
+    return _dt.datetime.utcnow() - _dt.timedelta(minutes = MINUTES)
+
+async def email_alarm_user():
+    freezers = next(get_db()).query(_models.Freezer).all()
+    for freezer in freezers:
+        max_temp = freezer.max_temp
+        temps = next(get_db()).query(_models.Temperature).filter(
+            _models.Temperature.freeze_id == freezer.id, 
+            _models.Temperature.reading_date > minutes_ago())
+        for temp in temps:
+            if temp.temperature > max_temp:
+                EXECUTOR.submit(concurrent_check_freezer(freezer.id, max_temp, freezer.name))
+                pass
+    return 0
+
+def concurrent_check_freezer(freezer_id,  max_temp, freezer_name):
+    sleep(MINUTES * 60)
+    temps = next(get_db()).query(_models.Temperature).filter(
+            _models.Temperature.freeze_id == freezer_id, 
+            _models.Temperature.reading_date > minutes_ago())
+    for temp in temps:
+        if temp.temperature > max_temp:
+            email_send.sendEmail(freezer_id, freezer_name)
+
+
