@@ -218,4 +218,7 @@ def concurrent_check_freezer(freezer_id,  max_temp, freezer_name):
         if temp.temperature > max_temp:
             email_send.sendEmail(freezer_id, freezer_name)
 
-
+def delete_temp_data_every_period():
+    next(get_db()).query(_models.Temperature).all().delete(synchronize_session=False)
+    next(get_db()).commit()
+    return 0

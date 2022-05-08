@@ -167,3 +167,8 @@ def delete_temps_by_freezer_id(
 @repeat_every(seconds=3600)  # 1 hour
 async def remove_expired_tokens_task():
     return await _services.email_alarm_user()
+
+@app.on_event("startup")
+@repeat_every(seconds=2629746)  # 1 month
+def remove_expired_tokens_task():
+    return _services.delete_temp_data_every_period()
