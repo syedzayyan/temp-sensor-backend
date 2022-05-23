@@ -8,6 +8,9 @@ import sqlalchemy.orm as _orm
 import services as _services
 import schemas as _schemas
 
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
 import os as _os
 import dotenv as _dotenv
 
@@ -162,6 +165,10 @@ def delete_temps_by_freezer_id(
     dependencies=_fastapi.Depends(_services.get_current_user)
 ):
     return _services.delete_temp(db=db, id=id)
+
+
+app.mount('', StaticFiles(directory="dist/", html=True), name="static")
+
 
 @app.on_event("startup")
 @repeat_every(seconds=3600)  # 1 hour

@@ -210,7 +210,7 @@ async def email_alarm_user():
 
 #Concurrent Function that checks temperature again after an hour
 def concurrent_check_freezer(freezer_id,  max_temp, freezer_name):
-    sleep(MINUTES * 60)
+    sleep(MINUTES * 30)
     temps = next(get_db()).query(_models.Temperature).filter(
             _models.Temperature.freeze_id == freezer_id, 
             _models.Temperature.reading_date > minutes_ago())
